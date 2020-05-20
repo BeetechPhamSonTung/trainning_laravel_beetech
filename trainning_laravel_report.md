@@ -390,3 +390,65 @@ $cookie = cookie('name', 'value', $minutes);
 
 return back()->cookie($cookie);
 ```
+
+# Model trong Laravel
+
+## Defining Models (định nghĩa Model)
+**ORM** (Object Relational Mapping) là tên gọi chỉ việc ánh xạ các record dữ liệu trong hệ quản trị cơ sở dữ liệu sang dạng đối tượng mà mã nguồn đang định dạng trong class, nôm na có thể hiểu là một dạng kỹ thuật giúp lập trình viên thao tác dễ dàng hơn với database. Trong Laravel chúng ta sử dụng **Eloquent ORM**.
+
+Thông thường các `model` nằm trong thư mục `app` nhưng bạn có thể thoải mái đặt nó ở bất kì đâu bạn muốn miễn là tự động load được tới file `composer.json`. Tất cả các `model` đều extend `Illuminate\Database\Eloquent\Model`.
+
+Cách dễ nhất để tạo 1 `model` là dùng lệnh `make:model` trong **Artisan command**
+
+```
+php artisan make:model Flight
+```
+
+Nếu bạn muốn tạo luôn `database migration` thì bạn có thể dùng `--migration` hoặc `-m`
+```
+php artisan make:model Flight --m
+
+php artisan make:model Flight --migration
+```
+
+### Tên bảng
+
+Mặc định nếu như bạn đặt tên model là `Post` thì laravel sẽ mapping với bảng tên `posts`.
+ Những nếu bạn muốn đặt tên bảng khác đi nhưng vẫn phải theo đúng quy chuẩn 
+ convention đặt tên trong Laravel nhé(snake case). Ví dụ mình không đặt tên `posts` 
+ nữa mà mình đặt tên là `my_posts` chẳng hạn thì biến `$table` trong 
+ `Illuminate\Database\Eloquent\Model` sẽ mapping đúng model với tên bảng chúng ta 
+ khai báo.
+```php
+<?php
+
+namespace App;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Flight extends Model
+{
+    //
+}
+```
+
+### Retrieving Models (lấy dữ liệu từ model)
+
+`Eloquent` cung cấp cho chúng ta rất nhiều câu truy vấn query được định nghĩa sẵn, từ đó giúp việc lấy dữ liệu từ database trở nên hết sức nhanh gọn và dễ dàng. Ví dụ :
+```php
+<?php
+use  App\Post;
+
+$posts = Post::all();
+
+foreach ($posts as $post) {
+    echo $post->title;
+}
+```
+Method all sẽ trả về tất cả dữ liệu có trong bảng. Hoặc ta có thể thêm điều kiện, sau đó sử dụng `get`.
+```php
+$posts = Post::where('active', 1)
+               ->orderBy('id', 'desc')
+               ->take(10)
+               ->get();
+```
