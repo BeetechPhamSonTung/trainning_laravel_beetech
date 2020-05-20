@@ -1,4 +1,4 @@
-#Upload files trong Laravel
+# Upload files trong Laravel
 ## Tạo view
 -Đầu tiên mình cần tạo ra một view form có một input file và một input submit để thực hiện upload. (name: **DemoUpload.blade.php**)
 ```html
@@ -94,8 +94,9 @@ Trong đó:
 $Location: Là thư mục chứa file upload lên Sever.
 $filesName: Là tên mới của file.
 
-#Session trong Laravel
-##I.Giới thiệu (Introduction)
+# Session trong Laravel
+
+## I.Giới thiệu (Introduction)
 Laravel cung cấp cho chúng ta các khuôn mẫu để có thể tương tác với session. Trong Laravel có nhiều driver để lưu trữ session. Các bạn có thể mở file `config/session.php` lên và sẽ thấy các driver mà Laravel cho phép ta sử dụng:
 ```
 /*
@@ -112,7 +113,8 @@ Laravel cung cấp cho chúng ta các khuôn mẫu để có thể tương tác 
     |
     */
 ```
-###1. Cấu hình(Configuration)
+### 1. Cấu hình(Configuration)
+
 File cấu hình session trong ứng dụng Laravel là `config/session.php`. Dưới đây là một số driver hay sử dụng trong Laravel:
 
 * `file`: các session sẽ được lưu trữ trong file tại thư mục `storage/framework/sessions`. Bạn có thể thay đổi thư mục lưu trữ ở bên dưới:
@@ -142,5 +144,56 @@ Nếu bạn muốn tăng tính bảo mật khi lưu trữ các session, đặc b
 'encrypt' => false,
 ```
 Với cấu hình này, các session trước khi lưu trữ sẽ được mã hóa.
-###2.Điều kiện tiên quyết của driver (Driver prerequisite)
-####Database
+### 2.Điều kiện tiên quyết của driver (Driver prerequisite)
+
+#### Database
+
+Khi sử dụng driver `database` cho session, bạn cần phải tạo một table để lưu trữ các session đó. Laravel cung cấp cho chúng ta chuỗi lệnh Artisan để có thể khởi tạo nhanh table `sessions`.
+> php artisan session:table
+>
+> php artisan migrate
+
+Trước khi thực hiện hai lệnh trên, ta cần phải config database cho ứng dụng. Các bạn mở file `.env` là thiết lập các thông số database.
+
+```
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=myapp
+DB_USERNAME=root
+DB_PASSWORD=
+```
+Nếu như bạn không thích tên table `sessions` mặc định, bạn có thể cấu hình nó tại file `config/session.php` trước khi chạy 2 dòng lệnh trên.
+```
+'table' => 'sessions',
+```
+## II. Sử dụng session (Using the session)
+
+Có hai hướng chính để làm việc với session trong Laravel framework:
+
+1.Thông qua lớp khởi tạo `Illuminate\Http\Request`.
+
+2.Sử dụng global helper `session`.
+
+### 1. Lưu trữ dữ liệu (Storing data)
+
+Với method `put` từ object `Illuminate\Http\Request`
+```php
+$request->session()->put('key','value');
+```
+Với global helper `session`
+```php
+session(['key'=>'value']);
+```
+Bạn có thể push 1 item session vào mảng của nó bằng cách sử dụng dấu `.` để tham chiếu trong method `push`:
+```php
+$request->session()->push('user.username','Phạm Sơn Tùng');
+```
+hoặc thông qua global helper `session`:
+```php
+session(['user.username'=>'Phạm Sơn Tùng']);
+```
+Bây giờ chúng ta hãy thử kiểm tra xem session có thực sự được lưu trữ hay không?
+
+Hãy thử đăng ký một route ở `routes/web.php` để thực hiện store session như bên dưới:
+
