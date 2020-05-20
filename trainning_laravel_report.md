@@ -196,4 +196,155 @@ session(['user.username'=>'Phạm Sơn Tùng']);
 Bây giờ chúng ta hãy thử kiểm tra xem session có thực sự được lưu trữ hay không?
 
 Hãy thử đăng ký một route ở `routes/web.php` để thực hiện store session như bên dưới:
+```php
+Route::get('/session', function() {
+    session(['name' => 'Lê Chí Huy']);
+});
+```
+hoặc 
+```php
+use Illuminate\Http\Request;
 
+Route::get('/session', function (Request $requets) {
+    $request->session()->put('name', 'Lê Chí Huy');
+});
+```
+Nếu bạn đang sử dụng driver `file`, bạn hãy mở các file trong thư mục `storage/framework/sessions`, bạn sẽ tìm ra được session mà bạn vừa lưu trữ.
+```
+a:4:{s:6:"_token";s:40:"C56DUX9Tg07nbBOcPrwDqqf0JjEK8yBJk7PSeAIC";s:9:"_previous";
+a:1:{s:3:"url";s:29:"http://127.0.0.1:8000/session";}s:6:"_flash";a:2:{s:3:"old";
+a:0:{}s:3:"new";a:0:{}}s:4:"name";s:17:"Phạm Sơn Tùng";}
+```
+Nếu bạn sử dụng driver `cookie`, các session sẽ được lưu trữ dưới dạng cookie, được mã hóa để người dùng không thể xem hoặc chỉnh sửa.
+
+![alt](https://images.viblo.asia/full/ceeaa1b4-991c-40f4-bfdd-46acb060d83b.JPG)
+
+> **Lưu ý:** Bạn có thể tắt chế độ mã hóa session tương tự như một cookie.
+
+Nếu bạn đang sử dụng driver `database`, bạn có thể vào database của mình sau đó truy vấn đến table `sessions`.
+
+![alt](https://images.viblo.asia/af8b4454-4a6a-4137-aaf0-e961913c2303.JPG)
+
+Như bạn thấy, driver `database` cũng mã hóa các session để tăng tính bảo mật.
+
+Còn nếu bạn sử dụng driver `array` thì như đã nói ở trên, nó không lưu trữ ở bất kỳ đâu cả, các session sẽ biến mất ở request kế tiếp.
+
+### 2.Lấy dữ liệu (Retrieving data)
+
+Cũng như lưu trữ session, ở phần lấy dữ liệu ta cũng có hai cách.
+* Thông qua `Illuminate\Http\Request`
+```php
+$request->session()->get('key');
+```
+* Thông qua global helper `session`
+```php 
+session('key');
+```
+Nếu session không tồn tại, bạn có thể thiết lập giá trị mặc định cho nó. Bạn có thể truyền giá trị mặc định hoặc một Closure xử lý logic, sau đó trả về giá trị mặc định cần thiết lập.
+
+* Thông qua `Illuminate\Http\Request`
+```php 
+$request->session()->get('key', 'default');
+
+$request->session()->get('key', function() {
+    return 'default';
+});
+```
+* Thông qua global helper `session`
+```php 
+session('key', 'default');
+
+session('key', function() {
+    return 'default';
+});
+```
+
+#### a.Lấy tất cả dữ liệu session (Retrieving all session data)
+
+Với lớp `Illuminate\Http\Request` cho phép chúng ta lấy toàn bộ session được lưu trữ thông qua method `all`.
+```php
+$request->session()->all();
+```
+#### b.Kiểm tra một session có tồn tại (Checking if a session exist)
+
+Để kiểm tra sự tồn tại của một session, ta có thể sử dụng method `has` có trong lớp khởi tạo `Illuminate\Http\Request`. Method `has` sẽ trả về `true` nếu session tồn tại và có giá trị không phải là `null`.
+
+Chẳng hạn mình đăng ký route sau:
+```php
+Route::get('/session', function(Request $request) {
+    dd($request->session()->has('foo'));
+});
+```
+Do chúng ta chưa lưu trữ session nào có key là `foo` cả, nên kết quả sẽ là `false`.
+
+Giờ các bạn thử lưu trữ session `foo` này nhưng với giá trị là `null` xem sao.
+```php
+Route::get('/session', function(Request $request) {
+    $request->session()->put('foo', null);
+    
+    dd($request->session()->has('foo'));
+});
+```
+Vâng, kết quả thu được vẫn sẽ là `false`.
+
+Nếu bạn chỉ muốn kiểm tra xem session có tồn tại hay không, dù có giá trị `null` vẫn chấp nhận thì bạn có thể sử dụng method `exists` thay cho `has`.
+
+```php
+Route::get('/session', function(Request $request) {
+    $request->session()->put('foo', null);
+    
+    dd($request->session()->exists('foo'));
+});
+```
+Lúc này kết quả ta nhận được sẽ là `true`.
+
+#### c.Lấy và xóa một mục (Retrieving and deleting an item)
+
+Một số session sau khi lấy xong thì không cần dùng đến nữa, có một method thực hiện chuỗi công việc này. Method `pull` sau khi trả về giá trị của session thì sẽ xóa nó đi.
+```php
+$value = $request->session()->pull('key', 'default');
+```
+
+### 3.Flash data
+
+Chắc các bạn đã nghe về flash session data ở trong các tập trước rồi, nên mình sẽ không nói lại nữa. Nếu bạn muốn lưu trữ một số session chỉ trong request kế tiếp, bạn có thể sử dụng method `flash`.
+```php
+$request->session()->flash('status', 'message');
+```
+
+Nếu bạn muốn flash data một lần nữa, bạn có thể sử dụng method `reflash` để kéo dài "tuổi thọ" cho các flash data.
+```php
+$request->session()->reflash();
+```
+Nếu muốn chỉ đích danh flash data cần giữ lại, bạn có thể sử dụng method `keep` và truyền tham số là key flash session mà bạn muốn flash một lần nữa.
+```php
+$request->session()->keep('key');
+
+$request->session()->keep(['foo', 'bar']);
+```
+
+### 4.Xóa dữ liệu (Deleteing data)
+
+Method `forget` sẽ giúp chúng ta dễ dàng xóa bỏ một session.
+
+```php
+$request->session()->forget('key');
+
+$request->session()->forget(['foo', 'bar']);
+```
+Nếu bạn muốn xóa tất cả các session thì có thể sử dụng method `flush`.
+```php
+$request->session()->flush();
+```
+
+### 5.Khởi tạo lại session ID (Regenerating the session ID)
+
+Việc tạo lại session ID sẽ ngăn chặn người dùng tấn công ứng dụng với session fixation. Đây là một hình thức tấn công đơn giản nhưng lại vô cùng hiệu quả. Nó dựa vào việc server không thay đổi session ID sau khi đăng nhập vào hệ thống. Tin tặc sẽ lợi dụng điều này để thông qua session ID người dùng đánh cắp thông tin.
+
+Dễ hiểu như thế này, một website http://unsafe.com chấp nhận các session ID từ request. Hacker sẽ gửi đường dẫn http://unsafe.com?SID=1, với `SID=1` chính là session ID mà server đã cung cấp cho trình duyệt của hắn. Sau khi người dùng bị lừa và đăng nhập vào hệ thống thông qua link http://unsafe.com?SID=1 thì hacker có thể đăng nhập gián tiếp tài khoản người dùng, từ đó thực hiện khai thác thông tin, dữ liệu.
+
+Chính vì thế, Laralve sẽ tự động tạo lại session ID nếu ứng dụng của bạn sử dụng `LoginController` mặc định. Nếu như bạn cần tạo lại session ID thủ công, bạn có thể sự dụng method `regenerate`.
+
+```php
+$request->session()->regenerate();
+```
