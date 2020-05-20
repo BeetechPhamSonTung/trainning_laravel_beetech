@@ -580,4 +580,110 @@ Schema::enableForeignKeyConstraints();
 
 Schema::disableForeignKeyConstraints();    
 ```    
-    
+# Seeder
+
+## Seeder là gì?
+
+Sau khi tạo xong các `tables` bằng `migration` thì chúng ta cần dữ liệu mẫu để hiển thị, nếu nhập bằng tay thì rất mất công nên Laravel hỗ trợ ta **Seeder** để dễ dàng và nhanh chóng tạo dữ liệu.
+
+## Tạo seeder
+
+Chúng ta tạo `seeder` bằng `artisan command`:
+```
+php artisan make:seeder UserSeeder
+```
+**UserSeeder** sẽ nằm trong `database/seeds` sẽ có dạng:
+```php
+<?php
+
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+
+class DatabaseSeeder extends Seeder
+{
+    /**
+     * Run the database seeds.
+     *
+     * @return void
+     */
+    public function run()
+    {
+        DB::table('users')->insert([
+            'name' => Str::random(10),
+            'email' => Str::random(10).'@gmail.com',
+            'password' => Hash::make('password'),
+        ]);
+    }
+}
+```
+Sau đó chúng ta chạy lệnh 
+```
+php artisan db:seed
+//chạy tất cả các seeder
+php artisan db:seed --class=UserSeeder
+//chạy riêng UserSeeder
+```
+
+## Model Factories
+
+Các bạn thấy sử dụng cách trên nó vẫn còn thủ công, chúng ta phải thêm từng record cho một bảng bằng tay. Thay vì thế, để sinh ra một lượng dữ liệu lớn như 100 records chúng ta sẽ sử dụng Model Factories. Bây giờ các bạn hãy follow theo ví dụ của mình để có thể hiểu thêm về nó nhé.
+
+Ví dụ đặt ra là chúng ta cần tạo **1000 records** trong bảng users. Trong folder database ta sẽ thấy còn có một folder nữa là factories, bên trong folder này có 1 file tên là `UserFactory.php` dùng để định nghĩa cấu trúc của dữ liệu mẫu mà ta muốn thêm vào CSDL theo từng bảng. Trong folder đó có chứa sẵn `UserFactory.php`.
+
+```php
+<?php
+
+/** @var \Illuminate\Database\Eloquent\Factory $factory */
+
+use App\User;
+use Faker\Generator as Faker;
+use Illuminate\Support\Str;
+
+/*
+|--------------------------------------------------------------------------
+| Model Factories
+|--------------------------------------------------------------------------
+|
+| This directory should contain each of the model factory definitions for
+| your application. Factories provide a convenient way to generate new
+| model instances for testing / seeding your application's database.
+|
+*/
+
+$factory->define(App\User::class, function (Faker $faker) {
+    return [
+        'name' => $faker->name,
+        'email' => $faker->unique()->safeEmail,
+        'password' => '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', // secret
+        'remember_token' => str_random(10),
+    ];
+});
+```
+Sau đó chúng ta tạo ra vào file `UserSeeder`
+
+```php
+<?php
+
+use Illuminate\Database\Seeder;
+
+class DatabaseSeeder extends Seeder
+{
+    /**
+     * Seed the application's database.
+     *
+     * @return void
+     */
+    public function run()
+    {
+         $this->call(UserSeeder::class);
+    }
+}
+```
+Sau đó chạy lệnh 
+```
+php artisan db:seed
+```
+là đã tạo được dữ liệu mẫu theo ý muốn.
+
