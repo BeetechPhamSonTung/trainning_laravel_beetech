@@ -447,8 +447,137 @@ foreach ($posts as $post) {
 ```
 Method all sẽ trả về tất cả dữ liệu có trong bảng. Hoặc ta có thể thêm điều kiện, sau đó sử dụng `get`.
 ```php
+<?php 
 $posts = Post::where('active', 1)
                ->orderBy('id', 'desc')
                ->take(10)
                ->get();
 ```
+
+# Migration
+
+## 1.Giới thiệu chung
+
+Migration giống như một hệ thống quản lý phiên bản giống như Git nhưng dành cho cơ sở dữ liệu của bạn. Migration cho phép bạn định nghĩa các bảng trong CSDL, định nghĩa nội dung các bảng cũng như cập nhật thay đổi các bảng đó hoàn toàn bằng PHP. Đồng thời các thao tác với CSDL này còn có thể sử dụng trên các loại CSDL khác nhau như MySQL, SQL Server, Postgres, ... mà không cần phải chỉnh sửa lại code theo CSDL sử dụng.
+Điều kiện tiên quyết để chạy migration một cách thành công:
+
+* Phải có kết nối với database .
+* migrations muốn sử dụng được thì phải nằm trong thư mục App\database\migrations
+
+## 2.Tạo migration
+
+Để Tạo Migrations thì các bạn cũng có 2 cách tạo là dùng tay và dùng lệnh, nhưng mình khuyến khích mọi người dùng lệnh.
+
+Tạo Migrations bằng lệnh thì các bạn mở cmd lên và trỏ tới thư mục chứa project của các bạn(như mọi khi :-) ) và gõ 1 trong các lệnh sau tùy theo mục đích của bạn.
+
+* php artisan make:migration TenMigrate  : Tạo migrations thông thường.
+* php artisan make:migration TenMigrate --create=TableName  : Tạo migrations cho bảng.
+* php artisan make:migration TenMigrate --table=TableName  : Tạo migrations chỉnh sửa bảng.
+>Chú Thích: TenMigrate,TableName là các thông số các bạn có thể tùy chỉnh.
+
+VD: Mình sẽ tạo Migrations create_users_table cho table users.
+
+```
+php artisan make:migration create_users_table --create=users
+```
+
+Nếu tạo thành công nó sẽ báo dạng như sau: Created migration: xxxxxxxxxxxx: Lúc này bạn có thể kiểm tra lại bằng cách truy cập vào  App\database\migrations nếu thấy  có file tên trùng với phần xxxxxxxx ở trên thì là đã thành công.
+
+Tiếp đó các bạn mở file ra và sẽ thấy nội dung có dạng:
+
+```php 
+<?php
+
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Migrations\Migration;
+
+class CreateUsersTable extends Migration
+{
+    /**
+     * Run the migrations.
+     *
+     * @return void
+     */
+    public function up()
+    {
+        Schema::create('users', function (Blueprint $table) {
+           
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     *
+     * @return void
+     */
+    public function down()
+    {
+        //
+    }
+}
+```
+### Hàm up() và hàm down().
+* Hàm up trong Migrations có tác dụng thực thi migration
+* Hàm down trong Migrations có tác dụng thực thi đoạn lệnh `rollback`(trở về trước đó).
+
+## Thực thi migration
+
+Các lệnh thực thi migrations:
+
+* php artisan migrate =	 chạy migration
+* php artisan migrate:resest =	 resest lại migration
+* php artisan migrate:refesh =	 chạy lại migration
+* php artisan migrate:status =	 xem trạng thái của migration
+* php artisan migrate:install =	 cài đặt migration
+
+## Schema
+
+Bây giờ chúng ta sẽ tìm hiểu kỹ hơn `Schema` facade thực thi như nào nhé. Trong file migration để dùng `Schema` thì chúng ta sẽ use `Illuminate\Support\Facades\Schema`.
+Nếu muốn tạo một bảng mới trong DB của mình thì chúng ta có thể sử dụng
+```php
+Schema::create('users', function (Blueprint $table) {
+    $table->increments('id');
+});
+```
+Nếu các bạn muốn kiểm tra xem `table` hoặc `column` có tồn tại hay không thì ta dùng
+```php
+if (Schema::hasTable('users')) {
+    //
+}
+
+if (Schema::hasColumn('users', 'email')) {
+    //
+}
+```
+Nếu muốn đổi tên bảng từ `post` sang `posts` thì ta dùng
+```php
+Schema::rename('post', 'posts')
+```
+Khi chúng ta muốn xóa bảng thì có thể sử dụng Schema::drop()
+```php
+Schema::drop('users');
+
+Schema::dropIfExists('users');
+```
+
+### Foreign Key Constraints
+
+Đôi khi chúng ta muốn tạo các rằng buộc cho các bảng, chúng ta có thể sử dụng cú pháp sau để rằng buộc cho 2 bảng:
+```php
+Schema::table('posts', function ($table) {
+    $table->integer('user_id')->unsigned();
+
+    $table->foreign('user_id')->references('id')->on('users');
+});
+```
+Chú ý nếu không migrate mà không chạy được thì các bạn có thể tách ra làm 2 file migration để chạy.
+Để drop một foreign ta dùng : `$table->dropForeign('posts_user_id_foreign')`;
+Chúng ta nên để ý quy tắc đặt tên foreign `<tên_table>_<tên_khóa_ngoại>_foreign`
+Bạn có thể kích hoạt hay bỏ kích hoạt việc sử dụng foreign key constraint trong migration sử dụng hai hàm sau:
+```php
+Schema::enableForeignKeyConstraints();
+
+Schema::disableForeignKeyConstraints();    
+```    
+    
