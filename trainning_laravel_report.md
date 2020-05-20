@@ -348,3 +348,45 @@ Chính vì thế, Laralve sẽ tự động tạo lại session ID nếu ứng d
 ```php
 $request->session()->regenerate();
 ```
+
+# Cookie trong Laravel
+
+Cookie là những tập tin nhỏ mà trình duyệt tạo ra nhằm lưu trữ thông tin trong quá trình duyệt web, cookie có thể sử dụng để duy trì trạng thái người dùng khi vào các trang khác nhau trên một website. Cookie có thời gian hết hạn, do đó trong khoảng thời gian chưa hết hạn, nó lưu trữ thông tin người dùng cho những lần truy cập tiếp theo trên chính website đó.
+> Tất cả cookie được tạo bởi framework đã mã hóa và đăng ký bằng các mã chứng thực, chính vì vậy nó sẽ được coi là không hợp lệ nếu người dùng cố tình thay đổi.
+
+## I.Lấy cookie từ request (Retrieving cookie from request)
+
+Để nhận một giá trị cookie từ request, bạn có thể sử dụng method `cookie` trong lớp khởi tạo `Illuminate\Http\Request`.
+```php
+$value = $request->cookie('name');
+```
+Ngoài ra, bạn có thể sử dụng Cookie `facade` để thay thế.
+```php
+use Illuminate\Support\Facades\Cookie;
+
+$value = Cookie::get('name');
+```
+## II.Đính kèm cookie đến response (Attaching cookie to response)
+
+Bạn có thể đính kèm mộ cookie đến object `Illuminate\Http\Response` bằng cách sử dụng method `cookie`. Bạn nên truyền đầy đủ tham số tên, giá trị cookie và thời gian tồn tại của cookie (tính theo phút). Nếu bạn bỏ qua tham số thời gian, Laravel sẽ coi cookie tồn tại như một session.
+```php
+return response('Hi')->cookie('name', 'Phạm Sơn Tùng', $minutes);
+```
+
+Method `cookie` hoạt động tương tự hàm `setcookie` mặc định của PHP. Chính vì vậy nó cũng có thể nhận một số tham số tùy chọn khác.
+
+```php
+return response('Hi')->cookie(
+    'name', 'value', $minutes, $path, $domain, $secure, $httpOnly
+);
+```
+Ngoài ra bạn có thể sử dụng method `queue` trong `Cookie` facade. Nói một chút về "queue", nó có nghĩ đen là "xếp hàng". Hiểu một cách đơn giản, thì set cookie "queue" sẽ thực hiện cuối cùng khi đã hoàn tất cả xử lý khác trong request hiện tại
+
+## III.Generating cookie instances
+
+Đại khái nếu bạn muốn set cookie chỉ khi cookie đó trả về cùng với response thì đăng ký cookie với method `cookie`. Cách này rất giống với cách đăng ký ở trên nhưng chúng ta có thể chèn một tham số object thay vì các tham số riêng lẻ như trên.
+```php
+$cookie = cookie('name', 'value', $minutes);
+
+return back()->cookie($cookie);
+```
